@@ -25,6 +25,34 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const resourcesCollection = client.db("edudDb").collection("resources");
+    const userCollection = client.db("edudDb").collection("users");
+
+    app.get('/users', async (req, res) => {
+    const users = await userCollection.find({}).toArray();
+    res.send(users);
+  });
+
+    app.get('/users/:email', async (req, res) => {
+       const email = req.params.email;
+       const user = await userCollection.findOne({ email });
+       if (!user) {
+         return res.status(404).send({ message: 'User not found' });
+       }
+      res.send(user);
+    });
+
+    app.post('/users', async (req, res) => {
+        const user = req.body;
+        const query = { email: user.email };
+        const existingUser = await userCollection.findOne(query);
+        if (existingUser) {
+            return res.send({ message: 'User already exists' });
+        }
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+    });
+    
+    // Create a new resource
     app.get('/resources', async (req, res) => {
         const request=await resourcesCollection.find().toArray();
         res.send(request);
